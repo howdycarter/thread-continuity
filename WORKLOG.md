@@ -26,3 +26,5 @@
 - Added a read-only Cursor composer/bubble parser that avoids credential keys and enables `thread_index(source="cursor")`.
 - Verified Cursor-only indexing, search, pack, and default tool-output hiding against the real Cursor thread.
 - Verified combined Codex + memory + Claude + Cursor indexing in one SQLite database.
+- Added repo graphics using local Codex, Claude, and Cursor app icons: banner, square logo, and social preview image.
+- Updated README value framing, supported-source table, graphics note, and plugin metadata assets.

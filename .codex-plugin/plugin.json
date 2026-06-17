@@ -1,7 +1,7 @@
 {
   "name": "thread-continuity",
   "version": "0.1.0",
-  "description": "Local-only continuity search for Codex agent threads and resume packets.",
+  "description": "Local-only continuity search for Codex, Claude Code, and Cursor agent threads.",
   "author": {
     "name": "Christopher Carter"
   },
@@ -10,6 +10,8 @@
   "license": "MIT",
   "keywords": [
     "codex",
+    "claude",
+    "cursor",
     "threads",
     "search",
     "mcp",
@@ -20,8 +22,8 @@
   "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "Thread Continuity",
-    "shortDescription": "Find prior agent threads and build safe resume packets.",
-    "longDescription": "Thread Continuity indexes local Codex session history read-only, ranks likely continuation threads, and returns compact resume packets with source refs, confidence, warnings, and staleness labels.",
+    "shortDescription": "Find prior local agent threads and build safe resume packets.",
+    "longDescription": "Thread Continuity indexes local Codex, Claude Code, Cursor, and memory history read-only, ranks likely continuation threads, and returns compact resume packets with source refs, confidence, warnings, and staleness labels.",
     "developerName": "Christopher Carter",
     "category": "Developer Tools",
     "capabilities": [
@@ -36,7 +38,12 @@
       "Find where we implemented this.",
       "Pack the last blocker and proof."
     ],
-    "brandColor": "#2563EB",
-    "screenshots": []
+    "brandColor": "#3CB4FF",
+    "composerIcon": "graphics/thread-continuity-logo.png",
+    "logo": "graphics/thread-continuity-logo.png",
+    "screenshots": [
+      "graphics/thread-continuity-banner.png",
+      "graphics/thread-continuity-social.png"
+    ]
   }
 }

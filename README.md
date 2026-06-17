@@ -1,6 +1,14 @@
 # Thread Continuity
 
-Thread Continuity is a local-only Codex plugin MVP for finding prior agent work and producing compact resume packets.
+![Thread Continuity banner](graphics/thread-continuity-banner.png)
+
+Thread Continuity is a local-only continuity layer for finding prior agent work and producing compact resume packets across Codex, Claude Code, and Cursor.
+
+## Value
+
+Agent work gets scattered across harnesses, repos, and time. Thread Continuity gives a new agent a local evidence trail before it touches code: what thread mattered, where it happened, what the last known state was, what files or proofs were referenced, and what needs to be verified before continuing.
+
+The product is intentionally boring in the best way: local index, read-only adapters, short cited snippets, and explicit stale-result warnings.
 
 ## What It Does
 
@@ -10,6 +18,16 @@ Thread Continuity is a local-only Codex plugin MVP for finding prior agent work 
 - Classifies query intent for resume, implementation, blocker, artifact, decision, and status lookups.
 - Returns ranked candidates with workspace, source refs, status, confidence, staleness warnings, and short evidence snippets.
 - Builds compact `thread_pack` output for continuing work without dumping full transcripts.
+
+## Supported Sources
+
+| Source | Status | Notes |
+|---|---|---|
+| Codex | Ingested | Reads local session JSONL and archived session JSONL. |
+| Claude Code | Ingested | Reads local Claude Code project JSONL. |
+| Cursor | Ingested | Reads local Cursor composer/bubble storage from `state.vscdb`. |
+| Codex memory | Ingested | Reads local memory index and rollout summaries. |
+| CASS | Detected | Falls back to native local indexing when unavailable. |
 
 ## What It Avoids
 
@@ -108,6 +126,10 @@ Tests and local runs can override paths with:
 ## Privacy
 
 Thread Continuity is local-only by default. It reads local transcript files, writes a local SQLite index, and does not upload transcripts, cookies, credentials, or browser storage.
+
+## Graphics
+
+The repo graphics live in [graphics](graphics). Composite images use locally installed Codex, Claude, and Cursor app icons to communicate supported local sources. Third-party app icons and names are trademarks of their respective owners.
 
 ## License
 
