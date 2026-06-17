@@ -1,0 +1,42 @@
+{
+  "name": "thread-continuity",
+  "version": "0.1.0",
+  "description": "Local-only continuity search for Codex agent threads and resume packets.",
+  "author": {
+    "name": "Christopher Carter"
+  },
+  "homepage": "https://github.com/howdycarter/thread-continuity",
+  "repository": "https://github.com/howdycarter/thread-continuity",
+  "license": "MIT",
+  "keywords": [
+    "codex",
+    "threads",
+    "search",
+    "mcp",
+    "continuity",
+    "resume"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Thread Continuity",
+    "shortDescription": "Find prior agent threads and build safe resume packets.",
+    "longDescription": "Thread Continuity indexes local Codex session history read-only, ranks likely continuation threads, and returns compact resume packets with source refs, confidence, warnings, and staleness labels.",
+    "developerName": "Christopher Carter",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Read",
+      "Interactive"
+    ],
+    "websiteURL": "https://github.com/howdycarter/thread-continuity",
+    "privacyPolicyURL": "https://github.com/howdycarter/thread-continuity#privacy",
+    "termsOfServiceURL": "https://github.com/howdycarter/thread-continuity#license",
+    "defaultPrompt": [
+      "Resume building the prior feature.",
+      "Find where we implemented this.",
+      "Pack the last blocker and proof."
+    ],
+    "brandColor": "#2563EB",
+    "screenshots": []
+  }
+}

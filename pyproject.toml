@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "thread-continuity"
+version = "0.1.0"
+description = "Local-only continuity search for Codex agent threads."
+requires-python = ">=3.11"
+dependencies = []
+readme = "README.md"
+license = "MIT"
+authors = [
+  { name = "Christopher Carter" }
+]
+
+[project.urls]
+Homepage = "https://github.com/howdycarter/thread-continuity"
+Repository = "https://github.com/howdycarter/thread-continuity"
+
+[project.scripts]
+thread-continuity = "thread_continuity.cli:main"
+thread-continuity-mcp = "thread_continuity.server:main"
+
+[tool.setuptools.packages.find]
+include = ["thread_continuity*"]
+exclude = ["skills*", "tests*"]
+
+[tool.unittest]
+start-dir = "tests"

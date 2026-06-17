@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "thread-continuity": {
+      "title": "Thread Continuity",
+      "description": "Search local Codex threads and produce safe resume packets.",
+      "cwd": ".",
+      "command": "python3",
+      "args": [
+        "-m",
+        "thread_continuity.server"
+      ]
+    }
+  }
+}
