@@ -23,7 +23,7 @@ Make Thread Continuity easy for other users to install and run as a local CLI pl
 - Plugin scaffold exists: `.codex-plugin/plugin.json`, `.mcp.json`, and `skills/thread-continuity/SKILL.md`.
 - MCP/API/CLI expose `thread_triage`, `thread_sources_status`, `thread_index_status`, `thread_search`, `thread_resume`, `thread_get`, `thread_pack`, `thread_sources_add`, `thread_open_ref`, `thread_export`, and `thread_eval`.
 - Codex JSONL and memory sources index read-only into SQLite FTS.
-- CASS, Claude Code, and Cursor are detected and reported with honest availability/status.
+- CASS, Claude Code, and Cursor are detected and reported with honest availability/status; Claude Code JSONL is ingested read-only when available.
 - Thread pack export supports Markdown and HTML.
 - Eval harness returns stable JSON with pass/fail cases, latency, warnings, and summary metrics.
 - Safety tests cover redaction and no raw tool-output exposure by default.
@@ -39,7 +39,7 @@ Make Thread Continuity easy for other users to install and run as a local CLI pl
 
 ## Non-Goals
 
-- Full production Claude/Cursor parsers.
+- Full production Cursor parser.
 - Semantic embeddings.
 - App/dashboard UI.
 - Team/shared sync.

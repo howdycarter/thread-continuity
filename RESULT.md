@@ -30,6 +30,7 @@ Status: Complete.
   - `thread_eval`
   - `thread_explain_result`
 - Source discovery now reports Codex, memory, CASS, Claude Code, Cursor, and configured source profiles.
+- Claude Code JSONL sessions are ingested read-only through `source="claude_code"`.
 - Markdown/HTML thread pack export.
 - Local smoke eval using the PRD query set.
 - Tests for redaction, default tool-output hiding, source profile registration, export, open-ref, eval, search, resume, and pack.
@@ -38,20 +39,31 @@ Status: Complete.
 
 ```text
 python3 -m unittest discover -s tests -v
-5 tests OK
+8 tests OK
 
 python3 path/to/validate_plugin.py .
 Plugin validation passed
 
-Bounded real-history smoke:
-index_threads=20
-index_messages=16912
-index_warnings=1
+Real Claude Code smoke:
+source=claude_code
+indexed_threads=32
+indexed_messages=1241
+warnings=0
+search_candidates=3
+pack_found=True
+tool_outputs_visible_by_default=False
+
+Combined real-history smoke:
+source=all
+unique_threads=306
+unique_messages=73111
+source_breakdown=claude_code:32,codex:239,memory:35
+
 eval_cases=10
 eval_passed=10
 eval_failed=0
 eval_pass_rate=1.0
-eval_p95_latency_ms=93.75
+eval_p95_latency_ms=386.07
 export_ok=True
 open_ref_ok=True
 open_supported=False
@@ -66,7 +78,7 @@ installed_eval_pass_rate=1.0
 
 ## Remaining Risks
 
-- Claude Code and Cursor are detected but not fully parsed yet.
+- Cursor is detected but not fully parsed yet.
 - CASS wrapping is ready at detection level, but CASS was not installed in this environment.
 - `thread_eval` is a smoke health check, not the full 60-100 session golden corpus described in the PRD.
 - `thread_open_ref` returns a local source reference because host-level thread opening is not available from the local MCP server.

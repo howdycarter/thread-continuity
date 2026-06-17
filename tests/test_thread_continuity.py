@@ -21,13 +21,16 @@ class ThreadContinuityTests(unittest.TestCase):
         self.sessions = self.root / "sessions"
         self.archived = self.root / "archived"
         self.memory = self.root / "memories"
+        self.claude = self.root / "claude"
         self.sessions.mkdir()
         self.archived.mkdir()
         self.memory.mkdir()
+        self.claude.mkdir()
         self.db_path = self.root / "index.sqlite3"
         self.config_path = self.root / "sources.json"
         self.export_path = self.root / "pack.md"
         self._write_session()
+        self._write_claude_session()
         (self.memory / "MEMORY.md").write_text(
             "# Task Group: thread continuity\n\n- thread search plugin proof and blocker notes\n",
             encoding="utf-8",
@@ -36,6 +39,7 @@ class ThreadContinuityTests(unittest.TestCase):
             "CODEX_SESSION_ROOT": str(self.sessions),
             "CODEX_ARCHIVED_SESSION_ROOT": str(self.archived),
             "CODEX_MEMORY_ROOT": str(self.memory),
+            "CLAUDE_CODE_SESSION_ROOT": str(self.claude),
             "THREAD_CONTINUITY_DB": str(self.db_path),
             "THREAD_CONTINUITY_CONFIG": str(self.config_path),
         }
@@ -48,7 +52,7 @@ class ThreadContinuityTests(unittest.TestCase):
             api = ThreadContinuity(ThreadStore())
             try:
                 indexed = api.thread_index(force=True)
-                self.assertEqual(indexed["indexed_threads"], 2)
+                self.assertEqual(indexed["indexed_threads"], 3)
                 self.assertGreater(indexed["indexed_messages"], 0)
 
                 search = api.thread_search("where implemented omnisocials queue review", limit=3)
@@ -67,6 +71,31 @@ class ThreadContinuityTests(unittest.TestCase):
                 self.assertTrue(pack["found"])
                 self.assertLessEqual(len(pack["evidence"]), 8)
                 self.assertIn("objective", pack)
+            finally:
+                api.close()
+
+    def test_claude_code_source_indexes_and_hides_tool_results(self) -> None:
+        with patch.dict(os.environ, self.env, clear=False):
+            api = ThreadContinuity(ThreadStore())
+            try:
+                indexed = api.thread_index(force=True, source="claude_code")
+                self.assertEqual(indexed["indexed_threads"], 1)
+                self.assertGreaterEqual(indexed["indexed_messages"], 3)
+
+                search = api.thread_search("claude run pytest", source="claude_code", limit=1)
+                self.assertTrue(search["candidates"])
+                top = search["candidates"][0]
+                self.assertEqual(top["source"], "claude_code")
+                self.assertIn("Claude parser smoke", top["title"])
+
+                thread = api.thread_get(top["thread_id"], include_messages=True, include_outputs=False)
+                self.assertTrue(thread["found"])
+                self.assertTrue(thread["messages"])
+                self.assertTrue(all(message["role"] != "tool" for message in thread["messages"]))
+
+                full_thread = json.dumps(api.thread_get(top["thread_id"], include_messages=True, include_outputs=True))
+                self.assertNotIn("fixture-redaction-value", full_thread)
+                self.assertIn("<redacted>", full_thread)
             finally:
                 api.close()
 
@@ -228,6 +257,70 @@ class ThreadContinuityTests(unittest.TestCase):
                 "payload": {
                     "type": "function_call_output",
                     "output": "curl 'http://localhost:8645/bluebubbles-webhook?password=sekrit123&limit=1' Authorization: Bearer abcdefghijklmnopqrstuvwxyz",
+                },
+            },
+        ]
+        path.write_text("\n".join(json.dumps(row) for row in rows), encoding="utf-8")
+
+    def _write_claude_session(self) -> None:
+        path = self.claude / "claude-smoke.jsonl"
+        rows = [
+            {
+                "type": "ai-title",
+                "sessionId": "claude-smoke-session",
+                "aiTitle": "Claude parser smoke",
+            },
+            {
+                "type": "user",
+                "sessionId": "claude-smoke-session",
+                "cwd": "/tmp/workspaces/claude-project",
+                "timestamp": "2026-06-17T14:00:00.000Z",
+                "uuid": "claude-user-1",
+                "message": {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "Resume the Claude parser smoke test and run pytest.",
+                        }
+                    ],
+                },
+            },
+            {
+                "type": "assistant",
+                "sessionId": "claude-smoke-session",
+                "cwd": "/tmp/workspaces/claude-project",
+                "timestamp": "2026-06-17T14:01:00.000Z",
+                "uuid": "claude-assistant-1",
+                "message": {
+                    "role": "assistant",
+                    "content": [
+                        {
+                            "type": "tool_use",
+                            "name": "Bash",
+                            "input": {"command": "python3 -m pytest tests/test_thread_continuity.py"},
+                        },
+                        {
+                            "type": "text",
+                            "text": "Implemented Claude Code indexing in /tmp/workspaces/claude-project/thread_continuity/adapters.py. Next: run pytest.",
+                        },
+                    ],
+                },
+            },
+            {
+                "type": "user",
+                "sessionId": "claude-smoke-session",
+                "cwd": "/tmp/workspaces/claude-project",
+                "timestamp": "2026-06-17T14:02:00.000Z",
+                "uuid": "claude-user-2",
+                "message": {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "tool_result",
+                            "content": "pytest passed with token=fixture-redaction-value",
+                        }
+                    ],
                 },
             },
         ]

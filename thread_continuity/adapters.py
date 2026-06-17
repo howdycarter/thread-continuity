@@ -44,6 +44,13 @@ def discover_memory_files() -> list[Path]:
     return paths
 
 
+def discover_claude_jsonl() -> list[Path]:
+    root = env_path("CLAUDE_CODE_SESSION_ROOT", "~/.claude/projects")
+    if not root.exists():
+        return []
+    return sorted(root.glob("**/*.jsonl"))
+
+
 def parse_codex_jsonl(path: Path) -> ThreadRecord | None:
     metadata: dict[str, Any] = {}
     messages: list[MessageRecord] = []
@@ -95,6 +102,70 @@ def parse_codex_jsonl(path: Path) -> ThreadRecord | None:
         workspace=workspace,
         title=title,
         created_at=created_at,
+        updated_at=updated_at,
+        participants=sorted(participants) or ["unknown"],
+        messages=messages,
+        derived=derived,
+        source_path=source_path,
+        source_status=status,
+        body_available=bool(messages),
+    )
+
+
+def parse_claude_jsonl(path: Path) -> ThreadRecord | None:
+    metadata: dict[str, Any] = {}
+    messages: list[MessageRecord] = []
+    participants: set[str] = set()
+    malformed = 0
+    updated_at = iso_from_mtime(path)
+    created_at: str | None = None
+    workspace: str | None = None
+    title: str | None = None
+
+    try:
+        lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return None
+
+    for line_number, line in enumerate(lines, start=1):
+        item = safe_json_line(line)
+        if item is None:
+            malformed += 1
+            continue
+        session_id = _string_or_none(item.get("sessionId"))
+        if session_id:
+            metadata["sessionId"] = session_id
+        timestamp = _string_or_none(item.get("timestamp"))
+        if timestamp:
+            updated_at = timestamp
+            created_at = created_at or timestamp
+        workspace = workspace or _string_or_none(item.get("cwd"))
+        item_type = item.get("type")
+        if item_type == "ai-title":
+            title = _string_or_none(item.get("aiTitle")) or title
+            continue
+        parsed_messages = _messages_from_claude_item(path, line_number, item, timestamp)
+        for message in parsed_messages:
+            if not message.text:
+                continue
+            participants.add(message.role)
+            messages.append(message)
+
+    if not metadata and not messages:
+        return None
+
+    source_path = str(path)
+    thread_id = "claude_code-" + stable_id(f"{metadata.get('sessionId') or path.stem}:{path}")
+    full_text = "\n".join(message.text for message in messages[-80:])
+    derived = _derive(messages, full_text)
+    status = "indexed_with_warnings" if malformed else "indexed"
+
+    return ThreadRecord(
+        thread_id=thread_id,
+        source="claude_code",
+        workspace=workspace or _first_workspace(messages),
+        title=title or _make_title(messages, path),
+        created_at=created_at or (messages[0].timestamp if messages else updated_at),
         updated_at=updated_at,
         participants=sorted(participants) or ["unknown"],
         messages=messages,
@@ -159,6 +230,15 @@ def iter_records(source: str = "all", max_threads: int | None = None) -> Iterabl
     if source in {"all", "memory"}:
         for path in discover_memory_files():
             record = parse_memory_file(path)
+            if record is None:
+                continue
+            yield record
+            count += 1
+            if max_threads is not None and count >= max_threads:
+                return
+    if source in {"all", "claude_code"}:
+        for path in discover_claude_jsonl():
+            record = parse_claude_jsonl(path)
             if record is None:
                 continue
             yield record
@@ -251,6 +331,74 @@ def _message_from_item(
     )
 
 
+def _messages_from_claude_item(
+    path: Path,
+    line_number: int,
+    item: dict[str, Any],
+    timestamp: str | None,
+) -> list[MessageRecord]:
+    item_type = str(item.get("type") or "")
+    if item_type not in {"user", "assistant"}:
+        return []
+    message = item.get("message") if isinstance(item.get("message"), dict) else {}
+    role = str(message.get("role") or item_type)
+    content = message.get("content") if message else item.get("content")
+    normal_parts: list[str] = []
+    tool_messages: list[MessageRecord] = []
+
+    if isinstance(content, str):
+        normal_parts.append(content)
+    elif isinstance(content, list):
+        for part_index, part in enumerate(content):
+            if isinstance(part, str):
+                normal_parts.append(part)
+                continue
+            if not isinstance(part, dict):
+                continue
+            part_type = str(part.get("type") or "")
+            if part_type == "text":
+                text = _string_or_none(part.get("text"))
+                if text:
+                    normal_parts.append(text)
+                continue
+            if part_type == "tool_use":
+                tool_name = _string_or_none(part.get("name")) or "tool"
+                text = _claude_tool_use_text(tool_name, part.get("input"))
+                tool_messages.append(
+                    _record_message(
+                        path,
+                        line_number,
+                        f"tool_use:{part_index}",
+                        "tool",
+                        text,
+                        timestamp,
+                        tool_name,
+                    )
+                )
+                continue
+            if part_type == "tool_result":
+                text = _claude_tool_result_text(part.get("content"))
+                if text:
+                    tool_messages.append(
+                        _record_message(
+                            path,
+                            line_number,
+                            f"tool_result:{part_index}",
+                            "tool",
+                            text,
+                            timestamp,
+                            None,
+                        )
+                    )
+
+    records: list[MessageRecord] = []
+    normal_text = "\n".join(part for part in normal_parts if part.strip())
+    if normal_text.strip():
+        records.append(_record_message(path, line_number, "message", role, normal_text, timestamp, None))
+    records.extend(tool_messages)
+    return records
+
+
 def _content_text(content: Any) -> str:
     if isinstance(content, str):
         return content
@@ -264,6 +412,47 @@ def _content_text(content: Any) -> str:
         if isinstance(text, str):
             parts.append(text)
     return "\n".join(parts)
+
+
+def _record_message(
+    path: Path,
+    line_number: int,
+    suffix: str,
+    role: str,
+    text: str,
+    timestamp: str | None,
+    tool_name: str | None,
+) -> MessageRecord:
+    clipped = compact_text(text, limit=8000)
+    return MessageRecord(
+        message_id=stable_id(f"{path}:{line_number}:{suffix}:{role}:{clipped[:120]}"),
+        role=role,
+        text=clipped,
+        timestamp=timestamp,
+        tool_name=tool_name,
+        artifacts=extract_artifacts(clipped),
+        line_ref=f"{path}:{line_number}",
+    )
+
+
+def _claude_tool_use_text(tool_name: str, raw_input: Any) -> str:
+    rendered = json.dumps(raw_input, sort_keys=True) if isinstance(raw_input, (dict, list)) else str(raw_input or "")
+    parsed = parse_json(rendered)
+    if isinstance(parsed, dict) and "command" in parsed:
+        return f"{tool_name}: {parsed.get('command')}"
+    if isinstance(parsed, dict) and "cmd" in parsed:
+        return f"{tool_name}: {parsed.get('cmd')}"
+    return f"{tool_name}: {rendered}"
+
+
+def _claude_tool_result_text(content: Any) -> str:
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        return _content_text(content)
+    if isinstance(content, dict):
+        return json.dumps(content, sort_keys=True)
+    return ""
 
 
 def _function_call_text(payload: dict[str, Any]) -> str:

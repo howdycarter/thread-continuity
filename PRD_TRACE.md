@@ -22,7 +22,7 @@
 
 | Requirement | Status | Evidence |
 |---|---|---|
-| Claude Code adapter | Detected, parser deferred | `thread_sources_status` reports `~/.claude/projects` availability and marks indexing `not_implemented`. |
+| Claude Code adapter | Done | `thread_sources_status` reports `~/.claude/projects` availability and `thread_index(source="claude_code")` ingests Claude Code JSONL read-only. |
 | Cursor adapter | Detected, parser deferred | `thread_sources_status` reports Cursor storage availability and marks indexing `not_implemented`. |
 | CASS adapter | Detection done, wrapping deferred | `cass` availability is reported; fallback is used when absent. |
 | Source filters and source health | Done | Search supports `source`; `source_health` and source status are recorded. |
@@ -40,7 +40,7 @@
 
 ## Known Gaps
 
-- Full Claude/Cursor parsing is intentionally not claimed yet.
+- Full Cursor parsing is intentionally not claimed yet.
 - The eval harness is not a substitute for the PRD's 60-100 session golden corpus.
 - `thread_open_ref` returns a local source reference because host-level thread opening is not available from the MCP server.
 

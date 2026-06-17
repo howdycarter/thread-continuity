@@ -98,8 +98,8 @@ def harness_source_status() -> list[dict[str, Any]]:
             "count": _count_files(claude_root, "*.jsonl") if claude_root.is_dir() else 0,
             "paths": [str(claude_root)],
             "read_only": True,
-            "indexing": "not_implemented",
-            "note": "detected for Phase 2; parser intentionally not enabled in this MVP",
+            "indexing": "enabled",
+            "note": "Claude Code JSONL parser enabled for local read-only indexing",
         },
         {
             "source": "cursor",

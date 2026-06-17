@@ -5,7 +5,7 @@ Thread Continuity should ship as a local-first CLI plus MCP server. A Mac app ca
 ## Product Shape
 
 ```text
-Local source files -> SQLite/FTS index -> CLI + MCP server -> Codex/Claude/Cursor/other agents
+Local Codex/Claude files -> SQLite/FTS index -> CLI + MCP server -> Codex/Claude/Cursor/other agents
 ```
 
 ## Install Path For Users
@@ -70,6 +70,6 @@ That value lives in a local indexer and MCP interface first.
 
 - Full golden eval corpus, not only smoke eval.
 - Real CASS wrapping when installed.
-- Claude Code and Cursor parsers upgraded from detection to ingestion.
+- Cursor parser upgraded from detection to ingestion.
 - Installer rollback/uninstall path.
 - Security review for transcript redaction and source discovery.

@@ -18,3 +18,7 @@
 - Added `scripts/install-local.sh` and `DISTRIBUTION.md`.
 - Fixed Python package discovery so editable installs include only `thread_continuity`.
 - Verified a temp install under `/tmp/thread-continuity-install-venv` and `/tmp/thread-continuity-bin`.
+- Tested real local Claude Code sources and found 32 JSONL files were detectable but not ingested.
+- Added a read-only Claude Code JSONL parser and enabled `thread_index(source="claude_code")`.
+- Verified Claude-only indexing, search, pack, and default tool-output hiding against real local Claude Code history.
+- Verified combined Codex + memory + Claude indexing in one SQLite database.
