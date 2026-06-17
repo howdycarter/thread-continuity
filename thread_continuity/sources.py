@@ -105,11 +105,15 @@ def harness_source_status() -> list[dict[str, Any]]:
             "source": "cursor",
             "kind": "sqlite-or-json-storage",
             "available": any(root.exists() for root in cursor_roots),
-            "count": sum(_count_files(root, "*.sqlite") + _count_files(root, "*.db") for root in cursor_roots if root.exists()),
+            "count": sum(
+                _count_files(root, "state.vscdb") + _count_files(root, "*.sqlite") + _count_files(root, "*.db")
+                for root in cursor_roots
+                if root.exists()
+            ),
             "paths": [str(root) for root in cursor_roots],
             "read_only": True,
-            "indexing": "not_implemented",
-            "note": "detected for Phase 2; avoids browser/local-storage credential surfaces",
+            "indexing": "enabled",
+            "note": "Cursor composer/bubble storage parser enabled; credential keys are not read",
         },
     ]
 

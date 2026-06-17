@@ -53,17 +53,26 @@ search_candidates=3
 pack_found=True
 tool_outputs_visible_by_default=False
 
+Real Cursor smoke:
+source=cursor
+indexed_threads=1
+indexed_messages=16
+warnings=0
+search_candidates=1
+pack_found=True
+tool_outputs_visible_by_default=False
+
 Combined real-history smoke:
 source=all
-unique_threads=306
-unique_messages=73111
-source_breakdown=claude_code:32,codex:239,memory:35
+unique_threads=308
+unique_messages=74891
+source_breakdown=claude_code:32,codex:240,cursor:1,memory:35
 
 eval_cases=10
 eval_passed=10
 eval_failed=0
 eval_pass_rate=1.0
-eval_p95_latency_ms=386.07
+eval_p95_latency_ms=248.65
 export_ok=True
 open_ref_ok=True
 open_supported=False
@@ -78,7 +87,7 @@ installed_eval_pass_rate=1.0
 
 ## Remaining Risks
 
-- Cursor is detected but not fully parsed yet.
+- Cursor support targets local composer/bubble storage and may need updates if Cursor changes storage shape.
 - CASS wrapping is ready at detection level, but CASS was not installed in this environment.
 - `thread_eval` is a smoke health check, not the full 60-100 session golden corpus described in the PRD.
 - `thread_open_ref` returns a local source reference because host-level thread opening is not available from the local MCP server.

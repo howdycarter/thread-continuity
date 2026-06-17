@@ -4,8 +4,8 @@ Thread Continuity is a local-only Codex plugin MVP for finding prior agent work 
 
 ## What It Does
 
-- Detects local Codex session sources, Claude Code session sources, and optional `cass`.
-- Indexes Codex and Claude Code JSONL sessions read-only into a local SQLite database.
+- Detects local Codex session sources, Claude Code session sources, Cursor composer storage, and optional `cass`.
+- Indexes Codex, Claude Code, and Cursor sessions read-only into a local SQLite database.
 - Searches with lexical SQLite FTS when available, with a LIKE fallback.
 - Classifies query intent for resume, implementation, blocker, artifact, decision, and status lookups.
 - Returns ranked candidates with workspace, source refs, status, confidence, staleness warnings, and short evidence snippets.
@@ -43,6 +43,7 @@ python3 -m unittest discover -s tests -v
 python3 -m thread_continuity.cli triage
 python3 -m thread_continuity.cli index --max-threads 20
 python3 -m thread_continuity.cli index --source claude_code --max-threads 20
+python3 -m thread_continuity.cli index --source cursor --max-threads 20
 python3 -m thread_continuity.cli search "resume building thread continuity" --limit 5
 python3 -m thread_continuity.cli eval --limit 5
 ```
@@ -78,6 +79,8 @@ By default the plugin reads:
 - `~/.codex/archived_sessions/**/*.jsonl`
 - `~/.codex/memories/MEMORY.md`
 - `~/.claude/projects/**/*.jsonl`
+- `~/Library/Application Support/Cursor/User/globalStorage/state.vscdb`
+- `~/Library/Application Support/Cursor/User/workspaceStorage/**/state.vscdb`
 
 The SQLite index defaults to:
 
@@ -89,6 +92,8 @@ Tests and local runs can override paths with:
 - `CODEX_ARCHIVED_SESSION_ROOT`
 - `CODEX_MEMORY_ROOT`
 - `CLAUDE_CODE_SESSION_ROOT`
+- `CURSOR_GLOBAL_STORAGE_ROOT`
+- `CURSOR_WORKSPACE_STORAGE_ROOT`
 - `THREAD_CONTINUITY_DB`
 - `THREAD_CONTINUITY_CONFIG`
 - `THREAD_CONTINUITY_EXPORT_ROOT`
@@ -97,7 +102,7 @@ Tests and local runs can override paths with:
 
 - Phase 0: CASS is detected and reported honestly. If unavailable, the plugin falls back to Codex-native indexing.
 - Phase 1: Codex local JSONL indexing, SQLite FTS search, resume packets, MCP tools, and skill behavior are implemented.
-- Phase 2: Claude Code local JSONL parsing is implemented. Cursor is detected in source status as a read-only future adapter, but full parsing is intentionally not claimed in this MVP.
+- Phase 2: Claude Code local JSONL parsing and Cursor composer/bubble storage parsing are implemented.
 - Phase 3: Local smoke eval, result explanation, staleness warnings, and redacted snippets are implemented as trust scaffolding.
 
 ## Privacy

@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import json
+import sqlite3
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
+from urllib.parse import unquote, urlparse
 
 from .models import DerivedRecord, MessageRecord, ThreadRecord
 from .sources import configured_source_status, harness_source_status
@@ -49,6 +52,21 @@ def discover_claude_jsonl() -> list[Path]:
     if not root.exists():
         return []
     return sorted(root.glob("**/*.jsonl"))
+
+
+def discover_cursor_dbs() -> list[Path]:
+    roots = [
+        env_path("CURSOR_WORKSPACE_STORAGE_ROOT", "~/Library/Application Support/Cursor/User/workspaceStorage"),
+        env_path("CURSOR_GLOBAL_STORAGE_ROOT", "~/Library/Application Support/Cursor/User/globalStorage"),
+    ]
+    paths: list[Path] = []
+    for root in roots:
+        if not root.exists():
+            continue
+        paths.extend(sorted(root.glob("**/state.vscdb")))
+        paths.extend(sorted(root.glob("**/*.sqlite")))
+        paths.extend(sorted(root.glob("**/*.db")))
+    return _dedupe_paths(paths)
 
 
 def parse_codex_jsonl(path: Path) -> ThreadRecord | None:
@@ -109,6 +127,62 @@ def parse_codex_jsonl(path: Path) -> ThreadRecord | None:
         source_path=source_path,
         source_status=status,
         body_available=bool(messages),
+    )
+
+
+def parse_cursor_composer(
+    db_path: Path,
+    composer_key: str,
+    composer: dict[str, Any],
+    workspace_by_composer: dict[str, str],
+) -> ThreadRecord | None:
+    composer_id = _string_or_none(composer.get("composerId")) or composer_key.split(":", 1)[-1]
+    headers = composer.get("fullConversationHeadersOnly")
+    if not isinstance(headers, list):
+        return None
+
+    messages: list[MessageRecord] = []
+    participants: set[str] = set()
+    bubble_map = _cursor_bubble_map(db_path, composer_id)
+    for index, header in enumerate(headers, start=1):
+        if not isinstance(header, dict):
+            continue
+        bubble_id = _string_or_none(header.get("bubbleId"))
+        if not bubble_id:
+            continue
+        bubble = bubble_map.get(bubble_id)
+        if not isinstance(bubble, dict):
+            continue
+        message = _message_from_cursor_bubble(db_path, composer_id, bubble_id, bubble, header, index)
+        if message is None:
+            continue
+        participants.add(message.role)
+        messages.append(message)
+
+    if not messages:
+        return None
+
+    source_path = f"{db_path}#{composer_key}"
+    workspace = workspace_by_composer.get(composer_id) or _first_workspace(messages)
+    created_at = _cursor_timestamp(composer.get("createdAt")) or messages[0].timestamp
+    updated_at = _cursor_timestamp(composer.get("lastUpdatedAt")) or messages[-1].timestamp or iso_from_mtime(db_path)
+    title = _string_or_none(composer.get("name")) or _make_title(messages, db_path)
+    full_text = "\n".join(message.text for message in messages[-80:])
+    derived = _derive(messages, full_text)
+
+    return ThreadRecord(
+        thread_id="cursor-" + stable_id(f"{composer_id}:{db_path}"),
+        source="cursor",
+        workspace=workspace,
+        title=title,
+        created_at=created_at,
+        updated_at=updated_at,
+        participants=sorted(participants) or ["unknown"],
+        messages=messages,
+        derived=derived,
+        source_path=source_path,
+        source_status="indexed",
+        body_available=True,
     )
 
 
@@ -245,6 +319,17 @@ def iter_records(source: str = "all", max_threads: int | None = None) -> Iterabl
             count += 1
             if max_threads is not None and count >= max_threads:
                 return
+    if source in {"all", "cursor"}:
+        workspace_by_composer = _cursor_workspace_map()
+        for db_path in discover_cursor_dbs():
+            for composer_key, composer in _cursor_composers(db_path):
+                record = parse_cursor_composer(db_path, composer_key, composer, workspace_by_composer)
+                if record is None:
+                    continue
+                yield record
+                count += 1
+                if max_threads is not None and count >= max_threads:
+                    return
 
 
 def source_status() -> list[dict[str, Any]]:
@@ -399,6 +484,147 @@ def _messages_from_claude_item(
     return records
 
 
+def _cursor_composers(db_path: Path) -> Iterable[tuple[str, dict[str, Any]]]:
+    for key, raw_value in _cursor_rows(db_path, "cursorDiskKV", "composerData:%"):
+        payload = _json_from_sqlite_value(raw_value)
+        if isinstance(payload, dict):
+            yield key, payload
+
+
+def _cursor_bubble_map(db_path: Path, composer_id: str) -> dict[str, dict[str, Any]]:
+    bubbles: dict[str, dict[str, Any]] = {}
+    prefix = f"bubbleId:{composer_id}:"
+    for key, raw_value in _cursor_rows(db_path, "cursorDiskKV", f"{prefix}%"):
+        payload = _json_from_sqlite_value(raw_value)
+        if not isinstance(payload, dict):
+            continue
+        bubble_id = key.removeprefix(prefix)
+        if bubble_id:
+            bubbles[bubble_id] = payload
+    return bubbles
+
+
+def _cursor_workspace_map() -> dict[str, str]:
+    workspace_root = env_path("CURSOR_WORKSPACE_STORAGE_ROOT", "~/Library/Application Support/Cursor/User/workspaceStorage")
+    mapping: dict[str, str] = {}
+    if not workspace_root.exists():
+        return mapping
+    for storage_dir in sorted(path for path in workspace_root.iterdir() if path.is_dir()):
+        workspace = _cursor_workspace_from_storage_dir(storage_dir)
+        if not workspace:
+            continue
+        db_path = storage_dir / "state.vscdb"
+        if not db_path.is_file():
+            continue
+        for _, raw_value in _cursor_rows(db_path, "ItemTable", "composer.composerData"):
+            payload = _json_from_sqlite_value(raw_value)
+            if not isinstance(payload, dict):
+                continue
+            for field in ("selectedComposerIds", "lastFocusedComposerIds"):
+                ids = payload.get(field)
+                if not isinstance(ids, list):
+                    continue
+                for composer_id in ids:
+                    if isinstance(composer_id, str) and composer_id.strip():
+                        mapping[composer_id] = workspace
+    return mapping
+
+
+def _cursor_workspace_from_storage_dir(storage_dir: Path) -> str | None:
+    path = storage_dir / "workspace.json"
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    folder = payload.get("folder") if isinstance(payload, dict) else None
+    if not isinstance(folder, str) or not folder.strip():
+        return None
+    parsed = urlparse(folder)
+    if parsed.scheme == "file":
+        return unquote(parsed.path)
+    return folder
+
+
+def _cursor_rows(db_path: Path, table: str, key_like: str) -> Iterable[tuple[str, Any]]:
+    if not db_path.is_file():
+        return
+    try:
+        conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+    except sqlite3.Error:
+        return
+    try:
+        rows = conn.execute(f"SELECT key, value FROM {table} WHERE key LIKE ?", (key_like,))
+        for key, value in rows:
+            if isinstance(key, str):
+                yield key, value
+    except sqlite3.Error:
+        return
+    finally:
+        conn.close()
+
+
+def _message_from_cursor_bubble(
+    db_path: Path,
+    composer_id: str,
+    bubble_id: str,
+    bubble: dict[str, Any],
+    header: dict[str, Any],
+    index: int,
+) -> MessageRecord | None:
+    tool_data = bubble.get("toolFormerData") if isinstance(bubble.get("toolFormerData"), dict) else None
+    role = "tool" if tool_data else ("user" if bubble.get("type") == 1 or header.get("type") == 1 else "assistant")
+    tool_name = _string_or_none(tool_data.get("name")) if tool_data else None
+    text = _cursor_tool_text(tool_name or "tool", tool_data) if tool_data else _string_or_none(bubble.get("text"))
+    if not text:
+        return None
+    timestamp = _cursor_timestamp(bubble.get("createdAt"))
+    line_ref = f"{db_path}#bubbleId:{composer_id}:{bubble_id}"
+    return _record_message(
+        Path(str(db_path)),
+        index,
+        f"cursor:{composer_id}:{bubble_id}",
+        role,
+        text,
+        timestamp,
+        tool_name,
+        line_ref=line_ref,
+    )
+
+
+def _cursor_tool_text(tool_name: str, tool_data: dict[str, Any] | None) -> str:
+    if not tool_data:
+        return ""
+    parts = [f"{tool_name}:"]
+    for field in ("rawArgs", "params", "result", "error"):
+        value = tool_data.get(field)
+        if value is None:
+            continue
+        rendered = value if isinstance(value, str) else json.dumps(value, sort_keys=True)
+        if rendered.strip():
+            parts.append(f"{field}: {rendered}")
+    return "\n".join(parts)
+
+
+def _json_from_sqlite_value(raw_value: Any) -> Any | None:
+    if isinstance(raw_value, bytes):
+        text = raw_value.decode("utf-8", errors="replace")
+    elif isinstance(raw_value, str):
+        text = raw_value
+    else:
+        return None
+    return parse_json(text)
+
+
+def _cursor_timestamp(value: Any) -> str | None:
+    if isinstance(value, (int, float)):
+        seconds = value / 1000 if value > 10_000_000_000 else value
+        try:
+            return datetime.fromtimestamp(seconds, timezone.utc).replace(microsecond=0).isoformat()
+        except (OSError, OverflowError, ValueError):
+            return None
+    return _string_or_none(value)
+
+
 def _content_text(content: Any) -> str:
     if isinstance(content, str):
         return content
@@ -422,6 +648,7 @@ def _record_message(
     text: str,
     timestamp: str | None,
     tool_name: str | None,
+    line_ref: str | None = None,
 ) -> MessageRecord:
     clipped = compact_text(text, limit=8000)
     return MessageRecord(
@@ -431,7 +658,7 @@ def _record_message(
         timestamp=timestamp,
         tool_name=tool_name,
         artifacts=extract_artifacts(clipped),
-        line_ref=f"{path}:{line_number}",
+        line_ref=line_ref or f"{path}:{line_number}",
     )
 
 
@@ -524,3 +751,15 @@ def _first_workspace(messages: list[MessageRecord]) -> str | None:
 
 def _string_or_none(value: Any) -> str | None:
     return value if isinstance(value, str) and value.strip() else None
+
+
+def _dedupe_paths(paths: list[Path]) -> list[Path]:
+    seen: set[str] = set()
+    result: list[Path] = []
+    for path in paths:
+        key = str(path)
+        if key in seen:
+            continue
+        seen.add(key)
+        result.append(path)
+    return result

@@ -22,3 +22,7 @@
 - Added a read-only Claude Code JSONL parser and enabled `thread_index(source="claude_code")`.
 - Verified Claude-only indexing, search, pack, and default tool-output hiding against real local Claude Code history.
 - Verified combined Codex + memory + Claude indexing in one SQLite database.
+- Tested real local Cursor after Chris created a Cursor thread and found storage in `state.vscdb` `cursorDiskKV`.
+- Added a read-only Cursor composer/bubble parser that avoids credential keys and enables `thread_index(source="cursor")`.
+- Verified Cursor-only indexing, search, pack, and default tool-output hiding against the real Cursor thread.
+- Verified combined Codex + memory + Claude + Cursor indexing in one SQLite database.

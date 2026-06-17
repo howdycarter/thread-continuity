@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import sqlite3
 import subprocess
 import tempfile
 import unittest
@@ -22,15 +23,20 @@ class ThreadContinuityTests(unittest.TestCase):
         self.archived = self.root / "archived"
         self.memory = self.root / "memories"
         self.claude = self.root / "claude"
+        self.cursor_workspace = self.root / "cursor-workspace"
+        self.cursor_global = self.root / "cursor-global"
         self.sessions.mkdir()
         self.archived.mkdir()
         self.memory.mkdir()
         self.claude.mkdir()
+        self.cursor_workspace.mkdir()
+        self.cursor_global.mkdir()
         self.db_path = self.root / "index.sqlite3"
         self.config_path = self.root / "sources.json"
         self.export_path = self.root / "pack.md"
         self._write_session()
         self._write_claude_session()
+        self._write_cursor_storage()
         (self.memory / "MEMORY.md").write_text(
             "# Task Group: thread continuity\n\n- thread search plugin proof and blocker notes\n",
             encoding="utf-8",
@@ -40,6 +46,8 @@ class ThreadContinuityTests(unittest.TestCase):
             "CODEX_ARCHIVED_SESSION_ROOT": str(self.archived),
             "CODEX_MEMORY_ROOT": str(self.memory),
             "CLAUDE_CODE_SESSION_ROOT": str(self.claude),
+            "CURSOR_WORKSPACE_STORAGE_ROOT": str(self.cursor_workspace),
+            "CURSOR_GLOBAL_STORAGE_ROOT": str(self.cursor_global),
             "THREAD_CONTINUITY_DB": str(self.db_path),
             "THREAD_CONTINUITY_CONFIG": str(self.config_path),
         }
@@ -52,7 +60,7 @@ class ThreadContinuityTests(unittest.TestCase):
             api = ThreadContinuity(ThreadStore())
             try:
                 indexed = api.thread_index(force=True)
-                self.assertEqual(indexed["indexed_threads"], 3)
+                self.assertEqual(indexed["indexed_threads"], 4)
                 self.assertGreater(indexed["indexed_messages"], 0)
 
                 search = api.thread_search("where implemented omnisocials queue review", limit=3)
@@ -71,6 +79,32 @@ class ThreadContinuityTests(unittest.TestCase):
                 self.assertTrue(pack["found"])
                 self.assertLessEqual(len(pack["evidence"]), 8)
                 self.assertIn("objective", pack)
+            finally:
+                api.close()
+
+    def test_cursor_source_indexes_composer_bubbles_and_hides_tool_results(self) -> None:
+        with patch.dict(os.environ, self.env, clear=False):
+            api = ThreadContinuity(ThreadStore())
+            try:
+                indexed = api.thread_index(force=True, source="cursor")
+                self.assertEqual(indexed["indexed_threads"], 1)
+                self.assertGreaterEqual(indexed["indexed_messages"], 3)
+
+                search = api.thread_search("cursor parser smoke social media", source="cursor", limit=1)
+                self.assertTrue(search["candidates"])
+                top = search["candidates"][0]
+                self.assertEqual(top["source"], "cursor")
+                self.assertEqual(top["workspace"], "/tmp/workspaces/cursor-project")
+                self.assertIn("Cursor parser smoke", top["title"])
+
+                thread = api.thread_get(top["thread_id"], include_messages=True, include_outputs=False)
+                self.assertTrue(thread["found"])
+                self.assertTrue(thread["messages"])
+                self.assertTrue(all(message["role"] != "tool" for message in thread["messages"]))
+
+                full_thread = json.dumps(api.thread_get(top["thread_id"], include_messages=True, include_outputs=True))
+                self.assertNotIn("fixture-redaction-value", full_thread)
+                self.assertIn("<redacted>", full_thread)
             finally:
                 api.close()
 
@@ -325,6 +359,81 @@ class ThreadContinuityTests(unittest.TestCase):
             },
         ]
         path.write_text("\n".join(json.dumps(row) for row in rows), encoding="utf-8")
+
+    def _write_cursor_storage(self) -> None:
+        composer_id = "cursor-composer-fixture"
+        user_bubble_id = "cursor-user-bubble"
+        assistant_bubble_id = "cursor-assistant-bubble"
+        tool_bubble_id = "cursor-tool-bubble"
+
+        workspace_dir = self.cursor_workspace / "fixture-workspace"
+        workspace_dir.mkdir()
+        (workspace_dir / "workspace.json").write_text(
+            json.dumps({"folder": "file:///tmp/workspaces/cursor-project"}),
+            encoding="utf-8",
+        )
+        workspace_db = workspace_dir / "state.vscdb"
+        with sqlite3.connect(workspace_db) as conn:
+            conn.execute("CREATE TABLE ItemTable (key TEXT UNIQUE ON CONFLICT REPLACE, value BLOB)")
+            conn.execute("CREATE TABLE cursorDiskKV (key TEXT UNIQUE ON CONFLICT REPLACE, value BLOB)")
+            conn.execute(
+                "INSERT INTO ItemTable(key, value) VALUES (?, ?)",
+                (
+                    "composer.composerData",
+                    json.dumps(
+                        {
+                            "selectedComposerIds": [composer_id],
+                            "lastFocusedComposerIds": [composer_id],
+                        }
+                    ),
+                ),
+            )
+
+        global_db = self.cursor_global / "state.vscdb"
+        with sqlite3.connect(global_db) as conn:
+            conn.execute("CREATE TABLE ItemTable (key TEXT UNIQUE ON CONFLICT REPLACE, value BLOB)")
+            conn.execute("CREATE TABLE cursorDiskKV (key TEXT UNIQUE ON CONFLICT REPLACE, value BLOB)")
+            composer = {
+                "composerId": composer_id,
+                "name": "Cursor parser smoke",
+                "status": "completed",
+                "createdAt": 1781732700000,
+                "lastUpdatedAt": 1781732710000,
+                "blobEncryptionKey": "ignored-fixture-key",
+                "conversationState": "ignored-encrypted-state",
+                "fullConversationHeadersOnly": [
+                    {"bubbleId": user_bubble_id, "type": 1, "grouping": {"hasText": True}},
+                    {"bubbleId": assistant_bubble_id, "type": 2, "grouping": {"hasText": True}},
+                    {"bubbleId": tool_bubble_id, "type": 2, "grouping": {"capabilityType": 15}},
+                ],
+            }
+            rows = {
+                f"composerData:{composer_id}": composer,
+                f"bubbleId:{composer_id}:{user_bubble_id}": {
+                    "bubbleId": user_bubble_id,
+                    "type": 1,
+                    "createdAt": 1781732700000,
+                    "text": "What do you think of this cursor parser smoke social media project?",
+                },
+                f"bubbleId:{composer_id}:{assistant_bubble_id}": {
+                    "bubbleId": assistant_bubble_id,
+                    "type": 2,
+                    "createdAt": 1781732705000,
+                    "text": "The Cursor parser smoke test should index composer bubbles and preserve workspace mapping.",
+                },
+                f"bubbleId:{composer_id}:{tool_bubble_id}": {
+                    "bubbleId": tool_bubble_id,
+                    "type": 2,
+                    "createdAt": 1781732710000,
+                    "toolFormerData": {
+                        "name": "run_terminal_command_v2",
+                        "params": {"command": "python3 -m unittest discover -s tests -v"},
+                        "result": "passed with token=fixture-redaction-value",
+                    },
+                },
+            }
+            for key, payload in rows.items():
+                conn.execute("INSERT INTO cursorDiskKV(key, value) VALUES (?, ?)", (key, json.dumps(payload)))
 
     def test_responses_redact_sensitive_values(self) -> None:
         with patch.dict(os.environ, self.env, clear=False):

@@ -23,7 +23,7 @@
 | Requirement | Status | Evidence |
 |---|---|---|
 | Claude Code adapter | Done | `thread_sources_status` reports `~/.claude/projects` availability and `thread_index(source="claude_code")` ingests Claude Code JSONL read-only. |
-| Cursor adapter | Detected, parser deferred | `thread_sources_status` reports Cursor storage availability and marks indexing `not_implemented`. |
+| Cursor adapter | Done | `thread_sources_status` reports Cursor storage availability and `thread_index(source="cursor")` ingests Cursor composer/bubble storage read-only. |
 | CASS adapter | Detection done, wrapping deferred | `cass` availability is reported; fallback is used when absent. |
 | Source filters and source health | Done | Search supports `source`; `source_health` and source status are recorded. |
 | Thread pack export | Done | `thread_export` writes Markdown or HTML compact packs. |
@@ -40,7 +40,7 @@
 
 ## Known Gaps
 
-- Full Cursor parsing is intentionally not claimed yet.
+- Cursor support targets local composer/bubble storage and may need updates if Cursor changes storage shape.
 - The eval harness is not a substitute for the PRD's 60-100 session golden corpus.
 - `thread_open_ref` returns a local source reference because host-level thread opening is not available from the MCP server.
 

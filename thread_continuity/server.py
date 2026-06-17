@@ -45,7 +45,7 @@ TOOLS: dict[str, dict[str, Any]] = {
             "type": "object",
             "properties": {
                 "force": {"type": "boolean"},
-                "source": {"type": "string", "enum": ["all", "codex", "memory", "claude_code"]},
+                "source": {"type": "string", "enum": ["all", "codex", "memory", "claude_code", "cursor"]},
                 "max_threads": {"type": "integer", "minimum": 1},
             },
             "additionalProperties": False,
