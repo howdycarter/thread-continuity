@@ -1,0 +1,161 @@
+{
+  "created_at": "2026-06-17T23:58:36Z",
+  "status": "omnisocials_drafts_created",
+  "published": false,
+  "scheduled": false,
+  "omnisocials_auth": {
+    "public_api": {
+      "ok": true,
+      "verified_endpoint": "GET /v1/accounts",
+      "workspace_name": "Howdy, Carter",
+      "target_accounts_active": [
+        "x",
+        "threads",
+        "linkedin",
+        "facebook",
+        "instagram"
+      ]
+    },
+    "browser_backend": {
+      "ok": true,
+      "note": "Safari was used to create and copy a replacement API key; public Bearer API is now the active route."
+    }
+  },
+  "source": {
+    "quote_url": "https://x.com/shadcn/status/2067139423532183840",
+    "repo_url": "https://github.com/howdycarter/thread-continuity"
+  },
+  "media": {
+    "local_path": "graphics/thread-continuity-social.png",
+    "alt_text": "Thread Continuity graphic showing Codex, Claude, and Cursor connected as local agent history sources.",
+    "public_url": "https://raw.githubusercontent.com/howdycarter/thread-continuity/main/graphics/thread-continuity-social.png"
+  },
+  "quality_gate": {
+    "score": 14,
+    "max_score": 15,
+    "hidden_mechanism": "Agent continuity breaks because useful work history is trapped inside separate harnesses.",
+    "named_artifact": "Thread Continuity",
+    "public_safe_proof": "Public repo plus local tests against Codex, Claude Code, Cursor, and memory.",
+    "reader_takeaway": "Search local evidence before asking a new agent to continue work."
+  },
+  "posts": [
+    {
+      "platform": "x",
+      "type": "quote_post",
+      "quote_url": "https://x.com/shadcn/status/2067139423532183840",
+      "media": "optional",
+      "content": "AI agents are teammates with amnesia.\n\nI built Thread Continuity so Codex, Claude Code, and Cursor can hand off local context with cited resume packets.\n\nLocal-only. Read-only. Open source.\n\nFeedback welcome:\nhttps://github.com/howdycarter/thread-continuity",
+      "omnisocials": {
+        "id": "44982094",
+        "status": "draft",
+        "account": "347355_x",
+        "media_url": "https://raw.githubusercontent.com/howdycarter/thread-continuity/main/graphics/thread-continuity-social.png",
+        "link_url": "https://x.com/shadcn/status/2067139423532183840"
+      }
+    },
+    {
+      "platform": "threads",
+      "type": "post",
+      "media": "graphics/thread-continuity-social.png",
+      "content": "AI agents are amazing, but they still have a basic problem:\n\nthey forget what happened in the other app.\n\nCodex has one history. Claude Code has another. Cursor has another.\n\nSo I built Thread Continuity: a local, read-only way to find prior agent work and create a short resume packet for the next agent.\n\nELI10: it is a notebook for AI teammates with amnesia.\n\nWould love feedback from builders who keep losing context between tools:\nhttps://github.com/howdycarter/thread-continuity",
+      "omnisocials": {
+        "id": "76680285",
+        "status": "draft",
+        "account": "347355_threads",
+        "media_url": "https://raw.githubusercontent.com/howdycarter/thread-continuity/main/graphics/thread-continuity-social.png",
+        "link_url": null
+      }
+    },
+    {
+      "platform": "linkedin",
+      "type": "post",
+      "media": "graphics/thread-continuity-social.png",
+      "content": "AI coding agents have a continuity problem.\n\nNot because they are weak.\nBecause the work is scattered.\n\nOne thread lives in Codex.\nAnother lives in Claude Code.\nAnother lives in Cursor.\nThen a new agent shows up and has to guess what already happened.\n\nI built Thread Continuity as a local, read-only bridge across that history.\n\nELI10: it is a notebook for AI teammates with amnesia.\n\nIt can search local Codex, Claude Code, Cursor, and memory sources, then produce a compact resume packet with:\n\n- what thread mattered\n- where the work happened\n- what the last known state was\n- what files/proofs were referenced\n- what still needs verification\n\nThe key design choice: old threads are evidence, not truth. The repo labels stale results and pushes the next agent to verify current code before acting.\n\nOpen source repo:\nhttps://github.com/howdycarter/thread-continuity\n\nI would love feedback from people building with multiple agent tools. What would make this genuinely useful in your workflow?",
+      "omnisocials": {
+        "id": "12361638",
+        "status": "draft",
+        "account": "347355_linkedin",
+        "media_url": "https://raw.githubusercontent.com/howdycarter/thread-continuity/main/graphics/thread-continuity-social.png",
+        "link_url": null
+      }
+    },
+    {
+      "platform": "facebook",
+      "type": "post",
+      "media": "graphics/thread-continuity-social.png",
+      "content": "I built a small open-source tool for a problem I keep running into:\n\nAI tools forget what happened in the other AI tool.\n\nCodex knows one thread. Claude Code knows another. Cursor knows another. Then you ask a new agent to continue, and it starts from vibes instead of evidence.\n\nThread Continuity is my attempt to fix that locally.\n\nELI10: it is a notebook for AI teammates with amnesia.\n\nIt searches your local agent history, finds the relevant old work, and creates a short resume packet so the next agent can pick up the thread without guessing.\n\nIt is local-only, read-only, and open source.\n\nWould love feedback:\nhttps://github.com/howdycarter/thread-continuity",
+      "omnisocials": {
+        "id": "52988475",
+        "status": "draft",
+        "account": "347355_facebook",
+        "media_url": "https://raw.githubusercontent.com/howdycarter/thread-continuity/main/graphics/thread-continuity-social.png",
+        "link_url": null
+      }
+    },
+    {
+      "platform": "instagram",
+      "type": "post",
+      "media": "graphics/thread-continuity-social.png",
+      "content": "AI agents are smart teammates with amnesia.\n\nOne remembers Codex.\nOne remembers Claude Code.\nOne remembers Cursor.\n\nThread Continuity gives them a local notebook.\n\nIt finds prior agent work, cites the evidence, and creates a short resume packet so the next agent can continue without guessing.\n\nLocal-only. Read-only. Open source.\n\nFeedback welcome:\nhttps://github.com/howdycarter/thread-continuity\n\n#AI #DeveloperTools #OpenSource #ProductDesign #DesignEngineering",
+      "omnisocials": {
+        "id": "63891195",
+        "status": "draft",
+        "account": "347355_instagram",
+        "media_url": "https://raw.githubusercontent.com/howdycarter/thread-continuity/main/graphics/thread-continuity-social.png",
+        "link_url": null
+      }
+    }
+  ],
+  "omnisocials_drafts": [
+    {
+      "platform": "x",
+      "id": "44982094",
+      "status": "draft",
+      "account": "347355_x",
+      "scheduled": false,
+      "published": false,
+      "media_attached": true,
+      "quote_url": "https://x.com/shadcn/status/2067139423532183840"
+    },
+    {
+      "platform": "threads",
+      "id": "76680285",
+      "status": "draft",
+      "account": "347355_threads",
+      "scheduled": false,
+      "published": false,
+      "media_attached": true,
+      "quote_url": null
+    },
+    {
+      "platform": "linkedin",
+      "id": "12361638",
+      "status": "draft",
+      "account": "347355_linkedin",
+      "scheduled": false,
+      "published": false,
+      "media_attached": true,
+      "quote_url": null
+    },
+    {
+      "platform": "facebook",
+      "id": "52988475",
+      "status": "draft",
+      "account": "347355_facebook",
+      "scheduled": false,
+      "published": false,
+      "media_attached": true,
+      "quote_url": null
+    },
+    {
+      "platform": "instagram",
+      "id": "63891195",
+      "status": "draft",
+      "account": "347355_instagram",
+      "scheduled": false,
+      "published": false,
+      "media_attached": true,
+      "quote_url": null
+    }
+  ]
+}

@@ -1,0 +1,171 @@
+{
+  "status": "scheduled",
+  "scheduled_at_utc": "2026-06-18T00:38:22.440Z",
+  "scheduled_at_local_hint": "Wed Jun 17 2026 19:38:22 GMT-0500 (Central Daylight Time)",
+  "preflight": [
+    {
+      "id": "63891195",
+      "status": "draft",
+      "platforms": [
+        "instagram"
+      ],
+      "content_keys": [
+        "instagram",
+        "default"
+      ],
+      "preview": "AI agents are smart teammates with amnesia.\n\nOne remembers Codex.\nOne remembers Claude Code.\nOne remembers Cursor.\n\nThread Continuity gives ",
+      "media_count": 1
+    },
+    {
+      "id": "52988475",
+      "status": "draft",
+      "platforms": [
+        "facebook"
+      ],
+      "content_keys": [
+        "facebook",
+        "default"
+      ],
+      "preview": "I built a small open-source tool for a problem I keep running into:\n\nAI tools forget what happened in the other AI tool.\n\nCodex knows one th",
+      "media_count": 1
+    },
+    {
+      "id": "12361638",
+      "status": "draft",
+      "platforms": [
+        "linkedin"
+      ],
+      "content_keys": [
+        "linkedin",
+        "default"
+      ],
+      "preview": "AI coding agents have a continuity problem.\n\nNot because they are weak.\nBecause the work is scattered.\n\nOne thread lives in Codex.\nAnother l",
+      "media_count": 1
+    },
+    {
+      "id": "76680285",
+      "status": "draft",
+      "platforms": [
+        "threads"
+      ],
+      "content_keys": [
+        "threads",
+        "default"
+      ],
+      "preview": "AI agents are amazing, but they still have a basic problem:\n\nthey forget what happened in the other app.\n\nCodex has one history. Claude Code",
+      "media_count": 1
+    },
+    {
+      "id": "44982094",
+      "status": "draft",
+      "platforms": [
+        "x"
+      ],
+      "content_keys": [
+        "x",
+        "default"
+      ],
+      "preview": "AI agents are teammates with amnesia.\n\nI built Thread Continuity so Codex, Claude Code, and Cursor can hand off local context with cited res",
+      "media_count": 1
+    }
+  ],
+  "updated": [
+    {
+      "id": "63891195",
+      "status": "scheduled",
+      "schedule_at": "2026-06-18T00:38:22.440Z",
+      "platforms": [
+        "instagram"
+      ]
+    },
+    {
+      "id": "52988475",
+      "status": "scheduled",
+      "schedule_at": "2026-06-18T00:38:22.440Z",
+      "platforms": [
+        "facebook"
+      ]
+    },
+    {
+      "id": "12361638",
+      "status": "scheduled",
+      "schedule_at": "2026-06-18T00:38:22.440Z",
+      "platforms": [
+        "linkedin"
+      ]
+    },
+    {
+      "id": "76680285",
+      "status": "scheduled",
+      "schedule_at": "2026-06-18T00:38:22.440Z",
+      "platforms": [
+        "threads"
+      ]
+    },
+    {
+      "id": "44982094",
+      "status": "scheduled",
+      "schedule_at": "2026-06-18T00:38:22.440Z",
+      "platforms": [
+        "x"
+      ]
+    }
+  ],
+  "readback": {
+    "scheduled_found": 5,
+    "remaining_drafts_found": 0,
+    "scheduled_posts": [
+      {
+        "id": "63891195",
+        "status": "scheduled",
+        "schedule_at": "2026-06-18T00:38:22.440Z",
+        "platforms": [
+          "instagram"
+        ],
+        "preview": "AI agents are smart teammates with amnesia.\n\nOne remembers Codex.\nOne remembers Claude Code.\nOne remembers Cursor.\n\nThread Continuity gives ",
+        "media_count": 1
+      },
+      {
+        "id": "52988475",
+        "status": "scheduled",
+        "schedule_at": "2026-06-18T00:38:22.440Z",
+        "platforms": [
+          "facebook"
+        ],
+        "preview": "I built a small open-source tool for a problem I keep running into:\n\nAI tools forget what happened in the other AI tool.\n\nCodex knows one th",
+        "media_count": 1
+      },
+      {
+        "id": "12361638",
+        "status": "scheduled",
+        "schedule_at": "2026-06-18T00:38:22.440Z",
+        "platforms": [
+          "linkedin"
+        ],
+        "preview": "AI coding agents have a continuity problem.\n\nNot because they are weak.\nBecause the work is scattered.\n\nOne thread lives in Codex.\nAnother l",
+        "media_count": 1
+      },
+      {
+        "id": "76680285",
+        "status": "scheduled",
+        "schedule_at": "2026-06-18T00:38:22.440Z",
+        "platforms": [
+          "threads"
+        ],
+        "preview": "AI agents are amazing, but they still have a basic problem:\n\nthey forget what happened in the other app.\n\nCodex has one history. Claude Code",
+        "media_count": 1
+      },
+      {
+        "id": "44982094",
+        "status": "scheduled",
+        "schedule_at": "2026-06-18T00:38:22.440Z",
+        "platforms": [
+          "x"
+        ],
+        "preview": "AI agents are teammates with amnesia.\n\nI built Thread Continuity so Codex, Claude Code, and Cursor can hand off local context with cited res",
+        "media_count": 1
+      }
+    ],
+    "remaining_drafts": []
+  }
+}
